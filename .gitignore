@@ -1,0 +1,6 @@
+*.pem
+*.retry
+*.swp
+*.pwd
+*.csv
+aws_access.yml

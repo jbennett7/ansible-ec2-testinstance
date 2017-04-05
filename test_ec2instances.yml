@@ -1,0 +1,15 @@
+---
+- hosts: localhost
+  connection: local
+  gather_facts: False
+  tasks:
+    - name: Including vars
+      include_vars: '{{ item }}'
+      with_items:
+        - defaults/main.yml
+        - vars/aws_access.yml
+      tags:
+        - test
+
+    - include: tasks/main.yml
+   

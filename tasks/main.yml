@@ -1,0 +1,72 @@
+---
+- name: Include AWS Access information
+  include_vars: aws_access.yml
+  tags:
+    - always
+
+- name: Provision the test instances
+  ec2:
+    aws_access_key: '{{ ec2_access_key }}'
+    aws_secret_key: '{{ ec2_secret_key }}'
+    ec2_url: '{{ ec2_console_login_link }}'
+    key_name: '{{ keypair }}'
+    group: '{{ secgroup }}'
+    instance_type: '{{ flavor }}'
+    image: '{{ ami_id }}'
+    region: '{{ region }}'
+    wait: true
+    count: '{{ instance_count }}'
+    volumes:
+      - device_name: /dev/sda1
+        volume_size: '{{ root_volume_size }}'
+        delete_on_termination: true
+  register: pgservers
+  tags:
+    - deploy
+    - test
+
+- name: Wait for SSH to come up
+  wait_for:
+    host: '{{ item.public_dns_name }}'
+    port: 22
+    delay: 60
+    timeout: 320
+    state: started
+  with_items: '{{ pgservers.instances }}'
+  tags:
+    - deploy
+
+- name: Add the first instance to hostgroup {{ in_memory_hostgroup_name }}
+  add_host:
+    name: '{{ item.public_dns_name }}'
+    groups: '{{ in_memory_hostgroup_name }}'
+    instance_id: '{{ item.id }}'
+    ansible_ssh_host: '{{ item.public_ip }}'
+    ansible_ssh_user: 'ec2-user'
+  with_items: '{{ pgservers.instances }}'
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags:
+    - deploy
+    - test
+
+- name: Display some of instance information
+  debug:
+    msg: '{{ hostvars[item].instance_id }}'
+  with_items: '{{ groups[in_memory_hostgroup_name] }}'
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags:
+    - test
+
+- name: Terminate ec2 instances
+  ec2:
+    aws_access_key: '{{ ec2_access_key }}'
+    aws_secret_key: '{{ ec2_secret_key }}'
+    ec2_url: '{{ ec2_console_login_link }}'
+    state: 'absent'
+    region: '{{ region }}'
+    instance_ids: '{{ hostvars[item].instance_id }}'
+  with_items: '{{ groups[in_memory_hostgroup_name] }}'
+  ignore_errors: "{{ ansible_check_mode }}"
+  tags:
+    - terminate
+    - test

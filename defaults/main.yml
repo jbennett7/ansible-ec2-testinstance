@@ -1,0 +1,9 @@
+---
+ami_id: 'ami-6f68cf0f'
+keypair: 'default'
+secgroup: 'default'
+flavor: 't2.micro'
+region: 'us-west-2'
+instance_count: 1
+root_volume_size: 10
+in_memory_hostgroup_name: 'ec2instances'
