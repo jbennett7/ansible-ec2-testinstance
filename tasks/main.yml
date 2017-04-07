@@ -22,8 +22,8 @@
         delete_on_termination: true
   register: pgservers
   tags:
-    - deploy
-    - test
+    - deploy-ec2instance
+    - test-ec2instance
 
 - name: Wait for SSH to come up
   wait_for:
@@ -34,7 +34,8 @@
     state: started
   with_items: '{{ pgservers.instances }}'
   tags:
-    - deploy
+    - deploy-ec2instance
+    - test-ec2instance
 
 - name: Add the first instance to hostgroup {{ in_memory_hostgroup_name }}
   add_host:
@@ -46,8 +47,8 @@
   with_items: '{{ pgservers.instances }}'
   ignore_errors: "{{ ansible_check_mode }}"
   tags:
-    - deploy
-    - test
+    - deploy-ec2instance
+    - test-ec2instance
 
 - name: Display some of instance information
   debug:
@@ -55,7 +56,7 @@
   with_items: '{{ groups[in_memory_hostgroup_name] }}'
   ignore_errors: "{{ ansible_check_mode }}"
   tags:
-    - test
+    - test-ec2instance
 
 - name: Terminate ec2 instances
   ec2:
@@ -69,4 +70,4 @@
   ignore_errors: "{{ ansible_check_mode }}"
   tags:
     - terminate
-    - test
+    - test-ec2instance
